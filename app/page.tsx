@@ -1,15 +1,19 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { ArrowRight, Mail, TrendingUp, Heart, Zap, Clock, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useAnalytics } from "@/lib/analytics"
-import { AnalyticsDebug } from "@/components/analytics-debug"
+import { SignupForm } from "@/components/signup-form"
+import { DatabaseStatus } from "@/components/database-status"
 
 export default function HomePage() {
   const analytics = useAnalytics()
+
+  const [isSignupFormOpen, setIsSignupFormOpen] = useState(false)
+  const [signupSource, setSignupSource] = useState("")
 
   useEffect(() => {
     // Track page-specific events
@@ -24,11 +28,16 @@ export default function HomePage() {
   const handleCTAClick = (ctaText: string, location: string) => {
     console.log(`🎯 CTA Clicked: ${ctaText} at ${location}`)
     analytics.trackCTAClick(ctaText, location)
-  }
 
-  const handleDemoRequest = () => {
-    console.log("📞 Demo requested from sticky CTA")
-    analytics.trackDemoRequest("sticky_cta")
+    // Open signup form
+    setSignupSource(location)
+    setIsSignupFormOpen(true)
+
+    // Track form open
+    analytics.track("signup_form_open", {
+      source: location,
+      cta_text: ctaText,
+    })
   }
 
   const handleFeatureCardHover = (feature: string) => {
@@ -90,14 +99,6 @@ export default function HomePage() {
             >
               Start Free Trial
               <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="text-lg px-8 py-4 border-2 hover:bg-gray-50 bg-transparent"
-              onClick={() => handleCTAClick("Book a Demo", "hero_secondary")}
-            >
-              Book a Demo
             </Button>
           </div>
         </div>
@@ -269,7 +270,7 @@ export default function HomePage() {
           <p className="text-xl mb-8 opacity-90">
             Join the beta and start growing your email list today. No credit card required.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center">
             <Button
               size="lg"
               className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-4"
@@ -278,30 +279,15 @@ export default function HomePage() {
               Start Free Trial
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-white text-white hover:bg-white/10 text-lg px-8 py-4 bg-transparent"
-              onClick={() => handleCTAClick("Book a Demo", "bottom_cta_secondary")}
-            >
-              Book a Demo
-            </Button>
           </div>
         </div>
       </section>
 
-      {/* Sticky CTA */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg rounded-full px-6 py-3"
-          onClick={handleDemoRequest}
-        >
-          Book Demo
-        </Button>
-      </div>
+      {/* Database Status Indicator */}
+      <DatabaseStatus />
 
-      {/* Analytics Debug Component */}
-      <AnalyticsDebug />
+      {/* Signup Form Modal */}
+      <SignupForm isOpen={isSignupFormOpen} onClose={() => setIsSignupFormOpen(false)} source={signupSource} />
     </div>
   )
 }
