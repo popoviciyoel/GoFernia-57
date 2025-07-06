@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { testDatabaseConnection, initializeDatabase } from "@/lib/database"
+import { testDatabaseConnection, initializeDatabase, checkSchemaExists } from "@/lib/database"
 
 export async function GET() {
   try {
@@ -66,6 +66,9 @@ export async function GET() {
       })
     }
 
+    // Check if schema exists
+    const schemaExists = await checkSchemaExists()
+
     return NextResponse.json({
       success: true,
       message: "Database connection successful",
@@ -75,6 +78,8 @@ export async function GET() {
         user: parsedUrl.username,
         ssl: parsedUrl.searchParams.get("sslmode"),
       },
+      schemaExists,
+      schemaStatus: schemaExists ? "Schema initialized" : "Schema needs initialization",
       timestamp: new Date().toISOString(),
     })
   } catch (error) {

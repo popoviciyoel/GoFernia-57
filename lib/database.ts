@@ -32,6 +32,7 @@ function validateAndParseDatabaseUrl(url: string | undefined): string {
 
 // Initialize connection with validation
 let sql: ReturnType<typeof neon>
+let isSchemaInitialized = false
 
 try {
   const databaseUrl = validateAndParseDatabaseUrl(process.env.DATABASE_URL)
@@ -88,6 +89,49 @@ export async function testDatabaseConnection(): Promise<boolean> {
       }
     }
 
+    return false
+  }
+}
+
+// Check if schema exists
+export async function checkSchemaExists(): Promise<boolean> {
+  try {
+    const result = await sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'signups'
+      ) as schema_exists
+    `
+    const exists = result[0].schema_exists
+    console.log(`🔍 Schema exists: ${exists}`)
+    return exists
+  } catch (error) {
+    console.error("Error checking schema:", error)
+    return false
+  }
+}
+
+// Auto-initialize schema if needed
+export async function ensureSchemaExists(): Promise<boolean> {
+  try {
+    if (isSchemaInitialized) {
+      return true
+    }
+
+    const schemaExists = await checkSchemaExists()
+    if (!schemaExists) {
+      console.log("🚀 Schema not found, initializing...")
+      await initializeDatabase()
+      isSchemaInitialized = true
+      return true
+    }
+
+    isSchemaInitialized = true
+    console.log("✅ Schema already exists")
+    return true
+  } catch (error) {
+    console.error("❌ Failed to ensure schema exists:", error)
     return false
   }
 }
@@ -195,6 +239,7 @@ export async function initializeDatabase() {
     await sql`CREATE INDEX IF NOT EXISTS idx_email_logs_sent_at ON email_logs(sent_at)`
 
     console.log("✅ Database schema initialized successfully")
+    isSchemaInitialized = true
     return true
   } catch (error) {
     console.error("❌ Database initialization error:", error)
@@ -213,6 +258,9 @@ export async function createSignup(signupData: {
   emailSent?: boolean
 }) {
   try {
+    // Ensure schema exists before operation
+    await ensureSchemaExists()
+
     const result = await sql`
       INSERT INTO signups (name, email, phone, comment, source, session_id, email_sent)
       VALUES (${signupData.name}, ${signupData.email}, ${signupData.phone || null}, 
@@ -235,6 +283,12 @@ export async function createSignup(signupData: {
       if (error.message.includes("connection")) {
         throw new Error("Database connection failed")
       }
+      if (error.message.includes("does not exist")) {
+        console.log("🚀 Table doesn't exist, initializing schema...")
+        await initializeDatabase()
+        // Retry the operation
+        return createSignup(signupData)
+      }
     }
 
     throw error
@@ -243,6 +297,9 @@ export async function createSignup(signupData: {
 
 export async function getSignups(limit = 50, offset = 0, emailFilter?: string) {
   try {
+    // Ensure schema exists before operation
+    await ensureSchemaExists()
+
     let query
     if (emailFilter) {
       query = sql`
@@ -261,12 +318,19 @@ export async function getSignups(limit = 50, offset = 0, emailFilter?: string) {
     return await query
   } catch (error) {
     console.error("Error getting signups:", error)
+    if (error instanceof Error && error.message.includes("does not exist")) {
+      await initializeDatabase()
+      return getSignups(limit, offset, emailFilter)
+    }
     throw error
   }
 }
 
 export async function getSignupStats() {
   try {
+    // Ensure schema exists before operation
+    await ensureSchemaExists()
+
     const stats = await sql`
       SELECT 
         COUNT(*) as total_signups,
@@ -296,6 +360,10 @@ export async function getSignupStats() {
     }
   } catch (error) {
     console.error("Error getting signup stats:", error)
+    if (error instanceof Error && error.message.includes("does not exist")) {
+      await initializeDatabase()
+      return getSignupStats()
+    }
     throw error
   }
 }
@@ -316,6 +384,9 @@ export async function createAnalyticsEvent(eventData: {
   utmCampaign?: string
 }) {
   try {
+    // Ensure schema exists before operation
+    await ensureSchemaExists()
+
     const result = await sql`
       INSERT INTO analytics_events (
         event_name, session_id, user_id, properties, page_url, page_title,
@@ -345,6 +416,12 @@ export async function createAnalyticsEvent(eventData: {
         console.error("❌ Database connection failed")
         throw new Error("Database connection failed")
       }
+      if (error.message.includes("does not exist")) {
+        console.log("🚀 Table doesn't exist, initializing schema...")
+        await initializeDatabase()
+        // Retry the operation
+        return createAnalyticsEvent(eventData)
+      }
     }
 
     throw error
@@ -353,6 +430,9 @@ export async function createAnalyticsEvent(eventData: {
 
 export async function getAnalyticsEvents(limit = 100, sessionId?: string) {
   try {
+    // Ensure schema exists before operation
+    await ensureSchemaExists()
+
     let query
     if (sessionId) {
       query = sql`
@@ -371,12 +451,19 @@ export async function getAnalyticsEvents(limit = 100, sessionId?: string) {
     return await query
   } catch (error) {
     console.error("Error getting analytics events:", error)
+    if (error instanceof Error && error.message.includes("does not exist")) {
+      await initializeDatabase()
+      return getAnalyticsEvents(limit, sessionId)
+    }
     throw error
   }
 }
 
 export async function getAnalyticsStats() {
   try {
+    // Ensure schema exists before operation
+    await ensureSchemaExists()
+
     const stats = await sql`
       SELECT 
         COUNT(*) as total_events,
@@ -419,6 +506,10 @@ export async function getAnalyticsStats() {
     }
   } catch (error) {
     console.error("Error getting analytics stats:", error)
+    if (error instanceof Error && error.message.includes("does not exist")) {
+      await initializeDatabase()
+      return getAnalyticsStats()
+    }
     throw error
   }
 }
@@ -444,6 +535,9 @@ export async function upsertAnalyticsSession(sessionData: {
   os?: string
 }) {
   try {
+    // Ensure schema exists before operation
+    await ensureSchemaExists()
+
     const result = await sql`
       INSERT INTO analytics_sessions (
         session_id, user_id, start_time, last_activity, page_views, events_count,
@@ -471,6 +565,10 @@ export async function upsertAnalyticsSession(sessionData: {
     return result[0]
   } catch (error) {
     console.error("Error upserting analytics session:", error)
+    if (error instanceof Error && error.message.includes("does not exist")) {
+      await initializeDatabase()
+      return upsertAnalyticsSession(sessionData)
+    }
     throw error
   }
 }
@@ -485,6 +583,9 @@ export async function createEmailLog(emailData: {
   errorMessage?: string
 }) {
   try {
+    // Ensure schema exists before operation
+    await ensureSchemaExists()
+
     const result = await sql`
       INSERT INTO email_logs (email, template_name, provider, status, provider_id, error_message)
       VALUES (${emailData.email}, ${emailData.templateName}, ${emailData.provider}, 
@@ -494,12 +595,19 @@ export async function createEmailLog(emailData: {
     return result[0]
   } catch (error) {
     console.error("Error creating email log:", error)
+    if (error instanceof Error && error.message.includes("does not exist")) {
+      await initializeDatabase()
+      return createEmailLog(emailData)
+    }
     throw error
   }
 }
 
 export async function getEmailLogs(limit = 50, email?: string) {
   try {
+    // Ensure schema exists before operation
+    await ensureSchemaExists()
+
     let query
     if (email) {
       query = sql`
@@ -518,6 +626,10 @@ export async function getEmailLogs(limit = 50, email?: string) {
     return await query
   } catch (error) {
     console.error("Error getting email logs:", error)
+    if (error instanceof Error && error.message.includes("does not exist")) {
+      await initializeDatabase()
+      return getEmailLogs(limit, email)
+    }
     throw error
   }
 }
@@ -525,6 +637,9 @@ export async function getEmailLogs(limit = 50, email?: string) {
 // Cleanup operations
 export async function clearAllData() {
   try {
+    // Ensure schema exists before operation
+    await ensureSchemaExists()
+
     await sql`DELETE FROM analytics_events`
     await sql`DELETE FROM analytics_sessions`
     await sql`DELETE FROM signups`
