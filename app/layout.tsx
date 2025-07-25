@@ -11,7 +11,9 @@ export const metadata: Metadata = {
   title: "GoFernia - Gamify Your Fashion Store",
   description:
     "Turn traffic into fans with play-to-win experiences. Interactive mini-games for fashion e-commerce that boost email signups and conversions.",
-    generator: 'v0.dev'
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({
@@ -47,6 +49,15 @@ export default function RootLayout({
         </noscript>
         <Suspense fallback={null}>{children}</Suspense>
         <Analytics />
+        <script
+          src="https://gofernia.com/game-embed.js"
+          data-triggers="widget,delay,scroll,exit"
+          data-delay="5000"
+          data-scroll="50"
+          data-widget-text="🎮 Play Game"
+          data-src="https://brand-spin-joyride-git-abercrombie-popoviciyoels-projects.vercel.app"
+          data-position="bottom-right"
+        ></script>
       </body>
     </html>
   )

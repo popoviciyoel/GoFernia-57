@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { useAnalytics } from "@/lib/analytics"
 import { SignupForm } from "@/components/signup-form"
 import { DatabaseStatus } from "@/components/database-status"
+import Image from "next/image"
 
 export default function HomePage() {
   const analytics = useAnalytics()
@@ -59,9 +60,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
+              <Image src={"/favicon.ico"} width={32} height={32} alt={"GoFernia Logo"} />
               <span className="text-xl font-bold text-gray-900">GoFernia</span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -282,9 +281,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Database Status Indicator */}
-      <DatabaseStatus />
 
       {/* Signup Form Modal */}
       <SignupForm isOpen={isSignupFormOpen} onClose={() => setIsSignupFormOpen(false)} source={signupSource} />

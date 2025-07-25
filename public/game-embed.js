@@ -49,8 +49,8 @@ function showModalIframe() {
     transform: scale(0.9);
     animation: popIn 0.5s ease forwards;
     max-width: 90%;
-    width: 700px;
-    height: 600px;
+    width: 90%;
+    height: 95%;
   `;
 
   const iframe = document.createElement('iframe');

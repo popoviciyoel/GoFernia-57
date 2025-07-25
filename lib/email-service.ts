@@ -35,7 +35,7 @@ class EmailService {
       this.apiKey = process.env.SMTP_PASSWORD || ""
     }
 
-    this.fromEmail = process.env.FROM_EMAIL || "hello@gofernia.com"
+    this.fromEmail = process.env.FROM_EMAIL || "yoel@gofernia.com"
     this.fromName = process.env.FROM_NAME || "GoFernia Team"
 
     console.log(`📧 Email service initialized with provider: ${this.provider}`)
@@ -198,7 +198,7 @@ Making e-commerce more engaging, one game at a time
     </div>
     
     <div class="footer">
-      <p>GoFernia Team | <a href="mailto:hello@gofernia.com">hello@gofernia.com</a></p>
+      <p>GoFernia Team | <a href="mailto:yoel@gofernia.com">yoel@gofernia.com</a></p>
     </div>
   </div>
 </body>
@@ -217,7 +217,7 @@ We've received your information and will be in touch soon with your access detai
 ${data.source ? `Signed up from: ${data.source.replace("_", " ")}` : ""}
 
 GoFernia Team
-hello@gofernia.com
+yoel@gofernia.com
     `
   }
 
