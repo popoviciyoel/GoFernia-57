@@ -51,7 +51,38 @@ function showModalIframe() {
     max-width: 90%;
     width: 90%;
     height: 95%;
+    position: relative;
   `;
+
+  // Close button
+  const closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '&times;';
+  closeBtn.style.cssText = `
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    font-size: 28px;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background 0.3s ease;
+  `;
+  closeBtn.addEventListener('mouseover', () => {
+    closeBtn.style.background = 'rgba(0, 0, 0, 0.7)';
+  });
+  closeBtn.addEventListener('mouseout', () => {
+    closeBtn.style.background = 'rgba(0, 0, 0, 0.5)';
+  });
+  closeBtn.addEventListener('click', () => overlay.remove());
 
   const iframe = document.createElement('iframe');
   iframe.src = gameUrl;
@@ -62,10 +93,13 @@ function showModalIframe() {
     border-radius: 16px;
   `;
 
+  modal.appendChild(closeBtn);
   modal.appendChild(iframe);
   overlay.appendChild(modal);
+
+  // Close on outside click
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) overlay.remove(); // close on outside click
+    if (e.target === overlay) overlay.remove();
   });
 
   document.body.appendChild(overlay);
